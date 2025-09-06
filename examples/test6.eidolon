@@ -1,0 +1,11 @@
+fun taylor_sin[angle, terms] = {
+  sum[k in 0...terms, ((-1)^k * angle^(2*k + 1)) / factorial[2*k + 1]]
+}
+
+
+let angle = PI / 2
+let approximation_terms = 5
+let estimated_sin = taylor_sin[angle, approximation_terms]
+let builtin_sin = sin[angle]
+
+abs[estimated_sin - builtin_sin]

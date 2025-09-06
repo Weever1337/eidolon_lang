@@ -1,0 +1,4 @@
+let wave = sin[$time * $frequency]
+let x_offset = wave * $amplitude
+
+x_offset

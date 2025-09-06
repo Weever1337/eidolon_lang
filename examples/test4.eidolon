@@ -1,0 +1,8 @@
+fun calculate_hypotenuse[a, b] = {
+    let a_squared = a^2
+    let b_squared = b^2
+
+    sqrt[a_squared + b_squared]
+}
+
+calculate_hypotenuse[3, 4]
