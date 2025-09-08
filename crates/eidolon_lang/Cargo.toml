@@ -1,0 +1,10 @@
+[package]
+name = "eidolon_lang"
+version = "1.0.0"
+edition = "2024"
+
+[lib]
+crate-type = ["rlib"]
+
+[dependencies]
+rand = "0.9.2"

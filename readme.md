@@ -37,4 +37,4 @@ You can see more examples in `examples` directory.
 ## TODO
 - [ ] Add more examples
 - [ ] Implement plugin for JetBrains IDE and Visual Studio Code
-- [ ] Implement JNI bridge
+- [x] Implement JNI bridge — https://github.com/Weever1337/nExus-bridge (Java 8+)

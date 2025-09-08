@@ -1,7 +1,10 @@
-[package]
-name = "eidolon_lang"
-version = "0.1.0"
-edition = "2021"
+[workspace]
+resolver = "2"
+members = [
+    "crates/eidolon_lang",
+    "crates/nexus_bridge",
+]
 
-[dependencies]
-rand = "0.9.2"
+[profile.release]
+lto = true
+codegen-units = 1
