@@ -13,6 +13,7 @@ pub enum TokenKind {
     Fun,
     Sum,
     In,
+    Dot,
     DotDotDot,
     Plus,
     Minus,
@@ -132,10 +133,10 @@ impl<'a> Lexer<'a> {
                         self.pos += 1;
                         TokenKind::DotDotDot
                     } else {
-                        panic!("Expected '...'")
+                        panic!("Expected '...' or '.'")
                     }
                 } else {
-                    panic!("Unexpected character: .")
+                    TokenKind::Dot
                 }
             }
             '=' => {

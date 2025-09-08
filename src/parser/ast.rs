@@ -1,13 +1,13 @@
 #[derive(Debug, PartialEq, Clone)]
 pub struct Program {
     pub statements: Vec<Statement>,
-    pub final_expr: Expression,
 }
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum Statement {
     LetBinding(LetBinding),
     FunctionDef(FunctionDef),
+    Expression(Expression),
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -40,6 +40,14 @@ pub enum Expression {
     FunctionCall(FunctionCall),
     IfElse(IfElse),
     SumLoop(SumLoop),
+    ListLiteral(Vec<Expression>),
+    MemberAccess(MemberAccess),
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub struct MemberAccess {
+    pub object: Box<Expression>,
+    pub member: String,
 }
 
 #[derive(Debug, PartialEq, Clone)]

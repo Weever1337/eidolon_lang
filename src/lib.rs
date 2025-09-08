@@ -2,12 +2,11 @@ pub mod errors;
 pub mod interpreter;
 pub mod parser;
 
-use crate::parser::ast::Program;
-use crate::parser::lexer::Lexer;
-use crate::parser::Parser;
-use errors::ParseError;
+use parser::{lexer::Lexer, Parser};
 
-pub fn parse_eidolon_source(source: &str) -> Result<Program, ParseError> {
+pub fn parse_eidolon_source(
+    source: &str,
+) -> Result<parser::ast::Program, errors::ParseError> {
     let lexer = Lexer::new(source);
     let tokens: Vec<_> = lexer.collect();
     let mut parser = Parser::new(tokens);

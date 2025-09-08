@@ -47,19 +47,17 @@ impl Parser {
 
     pub fn parse_program(&mut self) -> Result<Program, ParseError> {
         let mut statements = Vec::new();
-        while self.peek() == &TokenKind::Let || self.peek() == &TokenKind::Fun {
+        while self.peek() != &TokenKind::Eof {
             statements.push(self.parse_statement()?);
         }
-
-        let final_expr = self.parse_expression(0)?;
-        Ok(Program { statements, final_expr })
+        Ok(Program { statements })
     }
 
     fn parse_statement(&mut self) -> Result<Statement, ParseError> {
         match self.peek() {
             TokenKind::Let => self.parse_let_binding().map(Statement::LetBinding),
             TokenKind::Fun => self.parse_function_def().map(Statement::FunctionDef),
-            _ => Err(ParseError::unexpected_token("let or fun", self.peek().clone())),
+            _ => self.parse_expression(0).map(Statement::Expression),
         }
     }
 
@@ -104,6 +102,20 @@ impl Parser {
         Ok(FunctionDef { name, params, body })
     }
 
+    fn parse_list_literal(&mut self) -> Result<Expression, ParseError> {
+        self.expect(TokenKind::LBracket)?;
+        let mut items = Vec::new();
+        if self.peek() != &TokenKind::RBracket {
+            items.push(self.parse_expression(0)?);
+            while self.peek() == &TokenKind::Comma {
+                self.advance();
+                items.push(self.parse_expression(0)?);
+            }
+        }
+        self.expect(TokenKind::RBracket)?;
+        Ok(Expression::ListLiteral(items))
+    }
+
     fn parse_primary(&mut self) -> Result<Expression, ParseError> {
         match self.peek().clone() {
             TokenKind::Number(n) => {
@@ -140,6 +152,7 @@ impl Parser {
             }
             TokenKind::If => self.parse_if_else(),
             TokenKind::Sum => self.parse_sum_loop(),
+            TokenKind::LBracket => self.parse_list_literal(),
             _ => Err(ParseError::unexpected_token("expression", self.peek().clone())),
         }
     }
@@ -197,6 +210,15 @@ impl Parser {
     fn parse_expression(&mut self, min_prec: u8) -> Result<Expression, ParseError> {
         let mut left = self.parse_primary()?;
 
+        while *self.peek() == TokenKind::Dot {
+            self.advance();
+            let member = self.expect_identifier()?;
+            left = Expression::MemberAccess(MemberAccess {
+                object: Box::new(left),
+                member,
+            });
+        }
+
         while let Some(op_prec) = self.infix_precedence(self.peek()) {
             if op_prec < min_prec {
                 break;
@@ -213,6 +235,15 @@ impl Parser {
                 left: Box::new(left),
                 right: Box::new(right),
             });
+
+            while *self.peek() == TokenKind::Dot {
+                self.advance();
+                let member = self.expect_identifier()?;
+                left = Expression::MemberAccess(MemberAccess {
+                    object: Box::new(left),
+                    member,
+                });
+            }
         }
         Ok(left)
     }

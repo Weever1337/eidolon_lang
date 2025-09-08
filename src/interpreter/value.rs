@@ -9,6 +9,8 @@ pub enum EidolonValue {
     String(String),
     Vec2(Vec2),
     Vec3(Vec3),
+    List(Vec<EidolonValue>),
+    Unit,
 }
 
 impl EidolonValue {
@@ -35,6 +37,13 @@ impl EidolonValue {
             _ => Err(RuntimeError::new(format!("Expected Vec3, but found {:?}", self))),
         }
     }
+
+    pub fn as_list(&self) -> Result<&Vec<EidolonValue>, RuntimeError> {
+        match self {
+            EidolonValue::List(l) => Ok(l),
+            _ => Err(RuntimeError::new(format!("Expected a List, but found {:?}", self))),
+        }
+    }
 }
 
 impl fmt::Display for EidolonValue {
@@ -45,6 +54,11 @@ impl fmt::Display for EidolonValue {
             EidolonValue::String(s) => write!(f, "{}", s),
             EidolonValue::Vec2(v) => write!(f, "Vec2({}, {})", v.x, v.y),
             EidolonValue::Vec3(v) => write!(f, "Vec3({}, {}, {})", v.x, v.y, v.z),
+            EidolonValue::List(list) => {
+                let items: Vec<String> = list.iter().map(|v| v.to_string()).collect();
+                write!(f, "[{}]", items.join(", "))
+            }
+            EidolonValue::Unit => write!(f, "()"),
         }
     }
 }

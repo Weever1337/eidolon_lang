@@ -3,8 +3,8 @@ pub mod value;
 
 use crate::parser::ast::*;
 use environment::{Environment, Vec2, Vec3};
-use std::collections::HashMap;
 use rand::Rng;
+use std::collections::HashMap;
 use value::EidolonValue;
 
 #[derive(Debug, PartialEq)]
@@ -36,11 +36,22 @@ fn native_cos(args: Vec<EidolonValue>) -> Result<EidolonValue, RuntimeError> {
     Ok(EidolonValue::Number(n.cos()))
 }
 
+fn native_tan(args: Vec<EidolonValue>) -> Result<EidolonValue, RuntimeError> {
+    if args.len() != 1 {
+        return Err(RuntimeError::new("tan() expects 1 arg"));
+    }
+    let n = args[0].as_number()?;
+    Ok(EidolonValue::Number(n.tan()))
+}
+
 fn native_sqrt(args: Vec<EidolonValue>) -> Result<EidolonValue, RuntimeError> {
     if args.len() != 1 {
         return Err(RuntimeError::new("sqrt() expects 1 arg"));
     }
     let n = args[0].as_number()?;
+    if n < 0.0 {
+        return Err(RuntimeError::new("sqrt() of a negative number"));
+    }
     Ok(EidolonValue::Number(n.sqrt()))
 }
 
@@ -50,6 +61,49 @@ fn native_abs(args: Vec<EidolonValue>) -> Result<EidolonValue, RuntimeError> {
     }
     let n = args[0].as_number()?;
     Ok(EidolonValue::Number(n.abs()))
+}
+
+fn native_log(args: Vec<EidolonValue>) -> Result<EidolonValue, RuntimeError> {
+    if args.len() != 2 {
+        return Err(RuntimeError::new(
+            "log() expects 2 arguments: base and number",
+        ));
+    }
+    let base = args[0].as_number()?;
+    let n = args[1].as_number()?;
+    Ok(EidolonValue::Number(n.log(base)))
+}
+
+fn native_ln(args: Vec<EidolonValue>) -> Result<EidolonValue, RuntimeError> {
+    if args.len() != 1 {
+        return Err(RuntimeError::new("ln() expects 1 argument"));
+    }
+    let n = args[0].as_number()?;
+    Ok(EidolonValue::Number(n.ln()))
+}
+
+fn native_floor(args: Vec<EidolonValue>) -> Result<EidolonValue, RuntimeError> {
+    if args.len() != 1 {
+        return Err(RuntimeError::new("floor() expects 1 argument"));
+    }
+    let n = args[0].as_number()?;
+    Ok(EidolonValue::Number(n.floor()))
+}
+
+fn native_ceil(args: Vec<EidolonValue>) -> Result<EidolonValue, RuntimeError> {
+    if args.len() != 1 {
+        return Err(RuntimeError::new("ceil() expects 1 argument"));
+    }
+    let n = args[0].as_number()?;
+    Ok(EidolonValue::Number(n.ceil()))
+}
+
+fn native_round(args: Vec<EidolonValue>) -> Result<EidolonValue, RuntimeError> {
+    if args.len() != 1 {
+        return Err(RuntimeError::new("round() expects 1 argument"));
+    }
+    let n = args[0].as_number()?;
+    Ok(EidolonValue::Number(n.round()))
 }
 
 fn native_sig(args: Vec<EidolonValue>) -> Result<EidolonValue, RuntimeError> {
@@ -67,7 +121,9 @@ fn native_lerp(args: Vec<EidolonValue>) -> Result<EidolonValue, RuntimeError> {
     let t = args[2].as_number()?.clamp(0.0, 1.0);
 
     match (&args[0], &args[1]) {
-        (EidolonValue::Number(a), EidolonValue::Number(b)) => Ok(EidolonValue::Number(a + (b - a) * t)),
+        (EidolonValue::Number(a), EidolonValue::Number(b)) => {
+            Ok(EidolonValue::Number(a + (b - a) * t))
+        }
         (EidolonValue::Vec2(a), EidolonValue::Vec2(b)) => {
             let x = a.x + (b.x - a.x) * t;
             let y = a.y + (b.y - a.y) * t;
@@ -79,7 +135,9 @@ fn native_lerp(args: Vec<EidolonValue>) -> Result<EidolonValue, RuntimeError> {
             let z = a.z + (b.z - a.z) * t;
             Ok(EidolonValue::Vec3(Vec3 { x, y, z }))
         }
-        _ => Err(RuntimeError::new("lerp() arguments must be all numbers or all vectors of the same type")),
+        _ => Err(RuntimeError::new(
+            "lerp() arguments must be all numbers or all vectors of the same type",
+        )),
     }
 }
 
@@ -149,10 +207,15 @@ fn native_length(args: Vec<EidolonValue>) -> Result<EidolonValue, RuntimeError> 
     if args.len() != 1 {
         return Err(RuntimeError::new("length() expects 1 argument"));
     }
-    match args[0] {
+    match &args[0] {
         EidolonValue::Vec2(v) => Ok(EidolonValue::Number((v.x.powi(2) + v.y.powi(2)).sqrt())),
-        EidolonValue::Vec3(v) => Ok(EidolonValue::Number((v.x.powi(2) + v.y.powi(2) + v.z.powi(2)).sqrt())),
-        _ => Err(RuntimeError::new("length() expects a Vec2 or Vec3 argument")),
+        EidolonValue::Vec3(v) => Ok(EidolonValue::Number(
+            (v.x.powi(2) + v.y.powi(2) + v.z.powi(2)).sqrt(),
+        )),
+        EidolonValue::List(l) => Ok(EidolonValue::Number(l.len() as f64)),
+        _ => Err(RuntimeError::new(
+            "length() expects a Vec2, Vec3 or List argument",
+        )),
     }
 }
 
@@ -180,23 +243,70 @@ fn native_factorial(args: Vec<EidolonValue>) -> Result<EidolonValue, RuntimeErro
     Ok(EidolonValue::Number(result as f64))
 }
 
+fn native_print(args: Vec<EidolonValue>) -> Result<EidolonValue, RuntimeError> {
+    let output = args
+        .iter()
+        .map(|a| a.to_string())
+        .collect::<Vec<String>>()
+        .join(" ");
+    println!("{}", output);
+    Ok(EidolonValue::Unit)
+}
+
+fn native_first(args: Vec<EidolonValue>) -> Result<EidolonValue, RuntimeError> {
+    if args.len() != 1 {
+        return Err(RuntimeError::new("first() expects 1 list argument"));
+    }
+    let list = args[0].as_list()?;
+    list.first()
+        .cloned()
+        .ok_or_else(|| RuntimeError::new("Cannot get first element of an empty list"))
+}
+
+fn native_last(args: Vec<EidolonValue>) -> Result<EidolonValue, RuntimeError> {
+    if args.len() != 1 {
+        return Err(RuntimeError::new("last() expects 1 list argument"));
+    }
+    let list = args[0].as_list()?;
+    list.last()
+        .cloned()
+        .ok_or_else(|| RuntimeError::new("Cannot get last element of an empty list"))
+}
+
 fn load_builtins(env: &mut Environment) {
-    env.constants.insert("PI".to_string(), EidolonValue::Number(std::f64::consts::PI));
+    env.constants
+        .insert("PI".to_string(), EidolonValue::Number(std::f64::consts::PI));
+    env.constants
+        .insert("E".to_string(), EidolonValue::Number(std::f64::consts::E));
     env.native_functions.insert("sin".to_string(), native_sin);
     env.native_functions.insert("cos".to_string(), native_cos);
+    env.native_functions.insert("tan".to_string(), native_tan);
     env.native_functions.insert("sqrt".to_string(), native_sqrt);
     env.native_functions.insert("abs".to_string(), native_abs);
+    env.native_functions.insert("log".to_string(), native_log);
+    env.native_functions.insert("ln".to_string(), native_ln);
+    env.native_functions.insert("floor".to_string(), native_floor);
+    env.native_functions.insert("ceil".to_string(), native_ceil);
+    env.native_functions.insert("round".to_string(), native_round);
     env.native_functions.insert("sig".to_string(), native_sig);
     env.native_functions.insert("lerp".to_string(), native_lerp);
     env.native_functions.insert("clamp".to_string(), native_clamp);
     env.native_functions.insert("map".to_string(), native_map);
-    env.native_functions.insert("random".to_string(), native_random);
+    env.native_functions
+        .insert("random".to_string(), native_random);
     env.native_functions.insert("vec2".to_string(), native_vec2);
     env.native_functions.insert("vec3".to_string(), native_vec3);
     env.native_functions.insert("dot".to_string(), native_dot);
-    env.native_functions.insert("length".to_string(), native_length);
-    env.native_functions.insert("cross".to_string(), native_cross);
-    env.native_functions.insert("factorial".to_string(), native_factorial);
+    env.native_functions
+        .insert("length".to_string(), native_length);
+    env.native_functions
+        .insert("cross".to_string(), native_cross);
+    env.native_functions
+        .insert("factorial".to_string(), native_factorial);
+    env.native_functions
+        .insert("print".to_string(), native_print);
+    env.native_functions.insert("first".to_string(), native_first);
+    env.native_functions.insert("last".to_string(), native_last);
 }
 
 pub fn evaluate(
@@ -207,18 +317,30 @@ pub fn evaluate(
     load_builtins(&mut env);
 
     for stmt in &program.statements {
+        if let Statement::FunctionDef(func_def) = stmt {
+            env.functions
+                .insert(func_def.name.clone(), func_def.clone());
+        }
+    }
+
+    let mut last_result = EidolonValue::Unit;
+
+    for stmt in &program.statements {
         match stmt {
-            Statement::FunctionDef(func_def) => {
-                env.functions.insert(func_def.name.clone(), func_def.clone());
-            }
+            Statement::FunctionDef(_) => continue,
+
             Statement::LetBinding(let_binding) => {
                 let value = evaluate_expression(&let_binding.value, &mut env)?;
-                env.set_var(let_binding.name.clone(), value);
+                env.set_var(let_binding.name.clone(), value.clone());
+                last_result = value;
+            }
+            Statement::Expression(expr) => {
+                last_result = evaluate_expression(expr, &mut env)?;
             }
         }
     }
 
-    evaluate_expression(&program.final_expr, &mut env)
+    Ok(last_result)
 }
 
 fn evaluate_expression(
@@ -236,7 +358,38 @@ fn evaluate_expression(
             .get(name)
             .cloned()
             .ok_or_else(|| RuntimeError::new(format!("Global variable '${}' not found", name))),
-
+        Expression::ListLiteral(items) => {
+            let mut evaluated_items = Vec::new();
+            for item_expr in items {
+                evaluated_items.push(evaluate_expression(item_expr, env)?);
+            }
+            Ok(EidolonValue::List(evaluated_items))
+        }
+        Expression::MemberAccess(access) => {
+            let object = evaluate_expression(&access.object, env)?;
+            match object {
+                EidolonValue::Vec2(v) => match access.member.as_str() {
+                    "x" => Ok(EidolonValue::Number(v.x)),
+                    "y" => Ok(EidolonValue::Number(v.y)),
+                    _ => Err(RuntimeError::new(format!(
+                        "Vec2 does not have member '{}'",
+                        access.member
+                    ))),
+                },
+                EidolonValue::Vec3(v) => match access.member.as_str() {
+                    "x" => Ok(EidolonValue::Number(v.x)),
+                    "y" => Ok(EidolonValue::Number(v.y)),
+                    "z" => Ok(EidolonValue::Number(v.z)),
+                    _ => Err(RuntimeError::new(format!(
+                        "Vec3 does not have member '{}'",
+                        access.member
+                    ))),
+                },
+                _ => Err(RuntimeError::new(
+                    "Member access is only supported for vectors",
+                )),
+            }
+        }
         Expression::UnaryOp(op) => {
             let val = evaluate_expression(&op.expr, env)?;
             match (op.op, val) {
@@ -244,7 +397,6 @@ fn evaluate_expression(
                 _ => Err(RuntimeError::new("Type error in unary operation")),
             }
         }
-
         Expression::SumLoop(loop_data) => {
             let start = evaluate_expression(&loop_data.start, env)?.as_number()? as i64;
             let end = evaluate_expression(&loop_data.end, env)?.as_number()? as i64;
@@ -257,40 +409,113 @@ fn evaluate_expression(
             env.variables.remove(&loop_data.var_name);
             Ok(EidolonValue::Number(accumulator))
         }
-
         Expression::BinaryOp(op) => {
             let left = evaluate_expression(&op.left, env)?;
             let right = evaluate_expression(&op.right, env)?;
 
             match (op.op, left, right) {
-                (BinaryOperator::Add, EidolonValue::Number(l), EidolonValue::Number(r)) => Ok(EidolonValue::Number(l + r)),
-                (BinaryOperator::Subtract, EidolonValue::Number(l), EidolonValue::Number(r)) => Ok(EidolonValue::Number(l - r)),
-                (BinaryOperator::Multiply, EidolonValue::Number(l), EidolonValue::Number(r)) => Ok(EidolonValue::Number(l * r)),
-                (BinaryOperator::Divide, EidolonValue::Number(l), EidolonValue::Number(r)) => Ok(EidolonValue::Number(l / r)),
-                (BinaryOperator::Power, EidolonValue::Number(l), EidolonValue::Number(r)) => Ok(EidolonValue::Number(l.powf(r))),
-                (BinaryOperator::GreaterThan, EidolonValue::Number(l), EidolonValue::Number(r)) => Ok(EidolonValue::Boolean(l > r)),
-                (BinaryOperator::LessThan, EidolonValue::Number(l), EidolonValue::Number(r)) => Ok(EidolonValue::Boolean(l < r)),
-                (BinaryOperator::Equal, EidolonValue::Number(l), EidolonValue::Number(r)) => Ok(EidolonValue::Boolean((l - r).abs() < f64::EPSILON)),
-                (BinaryOperator::GreaterThanOrEqual, EidolonValue::Number(l), EidolonValue::Number(r)) => Ok(EidolonValue::Boolean(l >= r)),
-                (BinaryOperator::LessThanOrEqual, EidolonValue::Number(l), EidolonValue::Number(r)) => Ok(EidolonValue::Boolean(l <= r)),
-
-
-                (BinaryOperator::Add, EidolonValue::Vec2(v1), EidolonValue::Vec2(v2)) => Ok(EidolonValue::Vec2(Vec2 { x: v1.x + v2.x, y: v1.y + v2.y })),
-                (BinaryOperator::Subtract, EidolonValue::Vec2(v1), EidolonValue::Vec2(v2)) => Ok(EidolonValue::Vec2(Vec2 { x: v1.x - v2.x, y: v1.y - v2.y })),
-                (BinaryOperator::Multiply, EidolonValue::Vec2(v), EidolonValue::Number(s)) => Ok(EidolonValue::Vec2(Vec2 { x: v.x * s, y: v.y * s })),
-                (BinaryOperator::Multiply, EidolonValue::Number(s), EidolonValue::Vec2(v)) => Ok(EidolonValue::Vec2(Vec2 { x: v.x * s, y: v.y * s })),
-                (BinaryOperator::Divide, EidolonValue::Vec2(v), EidolonValue::Number(s)) => Ok(EidolonValue::Vec2(Vec2 { x: v.x / s, y: v.y / s })),
-
-                (BinaryOperator::Add, EidolonValue::Vec3(v1), EidolonValue::Vec3(v2)) => Ok(EidolonValue::Vec3(Vec3 { x: v1.x + v2.x, y: v1.y + v2.y, z: v1.z + v2.z })),
-                (BinaryOperator::Subtract, EidolonValue::Vec3(v1), EidolonValue::Vec3(v2)) => Ok(EidolonValue::Vec3(Vec3 { x: v1.x - v2.x, y: v1.y - v2.y, z: v1.z - v2.z })),
-                (BinaryOperator::Multiply, EidolonValue::Vec3(v), EidolonValue::Number(s)) => Ok(EidolonValue::Vec3(Vec3 { x: v.x * s, y: v.y * s, z: v.z * s })),
-                (BinaryOperator::Multiply, EidolonValue::Number(s), EidolonValue::Vec3(v)) => Ok(EidolonValue::Vec3(Vec3 { x: v.x * s, y: v.y * s, z: v.z * s })),
-                (BinaryOperator::Divide, EidolonValue::Vec3(v), EidolonValue::Number(s)) => Ok(EidolonValue::Vec3(Vec3 { x: v.x / s, y: v.y / s, z: v.z / s })),
-
+                (BinaryOperator::Add, EidolonValue::Number(l), EidolonValue::Number(r)) => {
+                    Ok(EidolonValue::Number(l + r))
+                }
+                (BinaryOperator::Subtract, EidolonValue::Number(l), EidolonValue::Number(r)) => {
+                    Ok(EidolonValue::Number(l - r))
+                }
+                (BinaryOperator::Multiply, EidolonValue::Number(l), EidolonValue::Number(r)) => {
+                    Ok(EidolonValue::Number(l * r))
+                }
+                (BinaryOperator::Divide, EidolonValue::Number(l), EidolonValue::Number(r)) => {
+                    Ok(EidolonValue::Number(l / r))
+                }
+                (BinaryOperator::Power, EidolonValue::Number(l), EidolonValue::Number(r)) => {
+                    Ok(EidolonValue::Number(l.powf(r)))
+                }
+                (BinaryOperator::GreaterThan, EidolonValue::Number(l), EidolonValue::Number(r)) => {
+                    Ok(EidolonValue::Boolean(l > r))
+                }
+                (BinaryOperator::LessThan, EidolonValue::Number(l), EidolonValue::Number(r)) => {
+                    Ok(EidolonValue::Boolean(l < r))
+                }
+                (BinaryOperator::Equal, EidolonValue::Number(l), EidolonValue::Number(r)) => {
+                    Ok(EidolonValue::Boolean((l - r).abs() < f64::EPSILON))
+                }
+                (
+                    BinaryOperator::GreaterThanOrEqual,
+                    EidolonValue::Number(l),
+                    EidolonValue::Number(r),
+                ) => Ok(EidolonValue::Boolean(l >= r)),
+                (
+                    BinaryOperator::LessThanOrEqual,
+                    EidolonValue::Number(l),
+                    EidolonValue::Number(r),
+                ) => Ok(EidolonValue::Boolean(l <= r)),
+                (BinaryOperator::Add, EidolonValue::Vec2(v1), EidolonValue::Vec2(v2)) => {
+                    Ok(EidolonValue::Vec2(Vec2 {
+                        x: v1.x + v2.x,
+                        y: v1.y + v2.y,
+                    }))
+                }
+                (BinaryOperator::Subtract, EidolonValue::Vec2(v1), EidolonValue::Vec2(v2)) => {
+                    Ok(EidolonValue::Vec2(Vec2 {
+                        x: v1.x - v2.x,
+                        y: v1.y - v2.y,
+                    }))
+                }
+                (BinaryOperator::Multiply, EidolonValue::Vec2(v), EidolonValue::Number(s)) => {
+                    Ok(EidolonValue::Vec2(Vec2 {
+                        x: v.x * s,
+                        y: v.y * s,
+                    }))
+                }
+                (BinaryOperator::Multiply, EidolonValue::Number(s), EidolonValue::Vec2(v)) => {
+                    Ok(EidolonValue::Vec2(Vec2 {
+                        x: v.x * s,
+                        y: v.y * s,
+                    }))
+                }
+                (BinaryOperator::Divide, EidolonValue::Vec2(v), EidolonValue::Number(s)) => {
+                    Ok(EidolonValue::Vec2(Vec2 {
+                        x: v.x / s,
+                        y: v.y / s,
+                    }))
+                }
+                (BinaryOperator::Add, EidolonValue::Vec3(v1), EidolonValue::Vec3(v2)) => {
+                    Ok(EidolonValue::Vec3(Vec3 {
+                        x: v1.x + v2.x,
+                        y: v1.y + v2.y,
+                        z: v1.z + v2.z,
+                    }))
+                }
+                (BinaryOperator::Subtract, EidolonValue::Vec3(v1), EidolonValue::Vec3(v2)) => {
+                    Ok(EidolonValue::Vec3(Vec3 {
+                        x: v1.x - v2.x,
+                        y: v1.y - v2.y,
+                        z: v1.z - v2.z,
+                    }))
+                }
+                (BinaryOperator::Multiply, EidolonValue::Vec3(v), EidolonValue::Number(s)) => {
+                    Ok(EidolonValue::Vec3(Vec3 {
+                        x: v.x * s,
+                        y: v.y * s,
+                        z: v.z * s,
+                    }))
+                }
+                (BinaryOperator::Multiply, EidolonValue::Number(s), EidolonValue::Vec3(v)) => {
+                    Ok(EidolonValue::Vec3(Vec3 {
+                        x: v.x * s,
+                        y: v.y * s,
+                        z: v.z * s,
+                    }))
+                }
+                (BinaryOperator::Divide, EidolonValue::Vec3(v), EidolonValue::Number(s)) => {
+                    Ok(EidolonValue::Vec3(Vec3 {
+                        x: v.x / s,
+                        y: v.y / s,
+                        z: v.z / s,
+                    }))
+                }
                 _ => Err(RuntimeError::new("Type mismatch in binary operation")),
             }
         }
-
         Expression::IfElse(if_else) => {
             let condition = evaluate_expression(&if_else.condition, env)?;
             match condition {
@@ -304,7 +529,6 @@ fn evaluate_expression(
                 _ => Err(RuntimeError::new("If condition must be a boolean")),
             }
         }
-
         Expression::FunctionCall(call) => {
             if let Some(native_fn) = env.native_functions.clone().get(&call.name) {
                 let mut evaluated_args = Vec::new();
@@ -335,13 +559,17 @@ fn evaluate_expression(
 
                 for stmt in &func_def.body.statements {
                     if let Statement::LetBinding(let_binding) = stmt {
-                        let value = evaluate_expression(&let_binding.value, &mut function_scope_env)?;
+                        let value =
+                            evaluate_expression(&let_binding.value, &mut function_scope_env)?;
                         function_scope_env.set_var(let_binding.name.clone(), value);
                     }
                 }
                 return evaluate_expression(&func_def.body.final_expr, &mut function_scope_env);
             }
-            Err(RuntimeError::new(format!("Function '{}' not found", call.name)))
+            Err(RuntimeError::new(format!(
+                "Function '{}' not found",
+                call.name
+            )))
         }
     }
 }

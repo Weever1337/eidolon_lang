@@ -1,0 +1,13 @@
+let x = 16
+let y = 10.7
+
+let root = sqrt[x]
+let logarithm = log[2, x]
+let natural_log = ln[E]
+let rounded_down = floor[y]
+let rounded_up = ceil[y]
+let rounded = round[y]
+
+
+# 4 + 4 + 1 + 10 + 11 + 11 = 41
+root + logarithm + natural_log + rounded_down + rounded_up + rounded

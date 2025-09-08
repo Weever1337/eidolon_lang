@@ -1,0 +1,16 @@
+let my_vec = vec2[10, 20]
+
+print["vector is:", my_vec]
+print["x is:", my_vec.x]
+
+let my_list = [1, my_vec.y, "hello", sin[PI/2], my_vec]
+print["list is:", my_list]
+print["list length:", length[my_list]]
+
+let first_item = first[my_list]
+let last_item = last[my_list]
+
+print["first item:", first_item]
+print["last item:", last_item]
+
+my_vec.x + first_item

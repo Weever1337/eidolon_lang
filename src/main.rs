@@ -5,7 +5,7 @@ use std::fs;
 
 fn main() {
     // todo: do better tests
-    let file_path = "examples/test6.eidolon";
+    let file_path = "examples/test_math.eidolon";
     let source_code = match fs::read_to_string(file_path) {
         Ok(code) => code,
         Err(e) => {
