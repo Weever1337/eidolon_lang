@@ -3,7 +3,7 @@ use crate::interpreter::RuntimeError;
 use crate::parser::ast::FunctionDef;
 use std::collections::HashMap;
 
-pub type NativeFunction = fn(Vec<EidolonValue>) -> Result<EidolonValue, RuntimeError>;
+pub type NativeFunction = fn(Vec<EidolonValue>, usize) -> Result<EidolonValue, RuntimeError>;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Vec2 {

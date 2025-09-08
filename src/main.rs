@@ -27,7 +27,7 @@ fn main() {
             }
         }
         Err(e) => {
-            eprintln!("Failed to parse: {}", e);
+            eprintln!("{}", e);
         }
     }
 }

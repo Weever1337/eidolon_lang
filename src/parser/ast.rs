@@ -30,7 +30,13 @@ pub struct FunctionDef {
 }
 
 #[derive(Debug, PartialEq, Clone)]
-pub enum Expression {
+pub struct Expression {
+    pub kind: Box<Expr>,
+    pub line: usize,
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub enum Expr {
     Literal(f64),
     StringLiteral(String),
     Variable(String),
@@ -46,29 +52,29 @@ pub enum Expression {
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct MemberAccess {
-    pub object: Box<Expression>,
+    pub object: Expression,
     pub member: String,
 }
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct SumLoop {
     pub var_name: String,
-    pub start: Box<Expression>,
-    pub end: Box<Expression>,
-    pub body: Box<Expression>,
+    pub start: Expression,
+    pub end: Expression,
+    pub body: Expression,
 }
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct BinaryOp {
     pub op: BinaryOperator,
-    pub left: Box<Expression>,
-    pub right: Box<Expression>,
+    pub left: Expression,
+    pub right: Expression,
 }
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct UnaryOp {
     pub op: UnaryOperator,
-    pub expr: Box<Expression>,
+    pub expr: Expression,
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -79,9 +85,9 @@ pub struct FunctionCall {
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct IfElse {
-    pub condition: Box<Expression>,
-    pub then_branch: Box<Expression>,
-    pub else_branch: Box<Expression>,
+    pub condition: Expression,
+    pub then_branch: Expression,
+    pub else_branch: Expression,
 }
 
 #[derive(Debug, PartialEq, Clone, Copy)]

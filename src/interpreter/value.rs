@@ -14,34 +14,43 @@ pub enum EidolonValue {
 }
 
 impl EidolonValue {
-    pub fn as_number(&self) -> Result<f64, RuntimeError> {
+    pub fn as_number(&self, line: usize) -> Result<f64, RuntimeError> {
         match self {
             EidolonValue::Number(n) => Ok(*n),
-            _ => Err(RuntimeError::new(format!(
-                "Expected a number, but found: {:?}",
-                self
-            ))),
+            _ => Err(RuntimeError::new(
+                format!("Expected a number, but found: {:?}", self),
+                line,
+            )),
         }
     }
 
-    pub fn as_vec2(&self) -> Result<Vec2, RuntimeError> {
+    pub fn as_vec2(&self, line: usize) -> Result<Vec2, RuntimeError> {
         match self {
             EidolonValue::Vec2(v) => Ok(*v),
-            _ => Err(RuntimeError::new(format!("Expected Vec2, but found {:?}", self))),
+            _ => Err(RuntimeError::new(
+                format!("Expected Vec2, but found {:?}", self),
+                line,
+            )),
         }
     }
 
-    pub fn as_vec3(&self) -> Result<Vec3, RuntimeError> {
+    pub fn as_vec3(&self, line: usize) -> Result<Vec3, RuntimeError> {
         match self {
             EidolonValue::Vec3(v) => Ok(*v),
-            _ => Err(RuntimeError::new(format!("Expected Vec3, but found {:?}", self))),
+            _ => Err(RuntimeError::new(
+                format!("Expected Vec3, but found {:?}", self),
+                line,
+            )),
         }
     }
 
-    pub fn as_list(&self) -> Result<&Vec<EidolonValue>, RuntimeError> {
+    pub fn as_list(&self, line: usize) -> Result<&Vec<EidolonValue>, RuntimeError> {
         match self {
             EidolonValue::List(l) => Ok(l),
-            _ => Err(RuntimeError::new(format!("Expected a List, but found {:?}", self))),
+            _ => Err(RuntimeError::new(
+                format!("Expected a List, but found {:?}", self),
+                line,
+            )),
         }
     }
 }

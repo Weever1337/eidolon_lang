@@ -39,6 +39,7 @@ pub enum TokenKind {
 #[derive(Debug, Clone, PartialEq)]
 pub struct Token {
     pub kind: TokenKind,
+    pub line: usize,
     pub pos: usize,
 }
 
@@ -46,6 +47,7 @@ pub struct Lexer<'a> {
     source: &'a str,
     chars: Peekable<CharIndices<'a>>,
     pos: usize,
+    line: usize,
 }
 
 impl<'a> Lexer<'a> {
@@ -54,6 +56,7 @@ impl<'a> Lexer<'a> {
             source,
             chars: source.char_indices().peekable(),
             pos: 0,
+            line: 1,
         }
     }
 
@@ -63,6 +66,9 @@ impl<'a> Lexer<'a> {
     {
         while let Some((_, c)) = self.chars.peek() {
             if predicate(*c) {
+                if *c == '\n' {
+                    self.line += 1;
+                }
                 self.pos += c.len_utf8();
                 self.chars.next();
             } else {
@@ -75,9 +81,10 @@ impl<'a> Lexer<'a> {
         self.read_while(|c| c.is_whitespace());
 
         let start_pos = self.pos;
+        let start_line = self.line;
 
         let Some((_, c)) = self.chars.next() else {
-            return Token { kind: TokenKind::Eof, pos: start_pos };
+            return Token { kind: TokenKind::Eof, line: start_line, pos: start_pos };
         };
         self.pos += c.len_utf8();
 
@@ -150,6 +157,13 @@ impl<'a> Lexer<'a> {
             }
             '#' => {
                 self.read_while(|c| c != '\n');
+                if let Some((_, '\n')) = self.chars.peek() {
+                    self.line += 1;
+                }
+                return self.next_token();
+            }
+            '\n' => {
+                self.line += 1;
                 return self.next_token();
             }
             '$' => {
@@ -191,7 +205,7 @@ impl<'a> Lexer<'a> {
             _ => panic!("Unexpected character: {}", c),
         };
 
-        Token { kind, pos: start_pos }
+        Token { kind, line: start_line, pos: start_pos }
     }
 }
 
