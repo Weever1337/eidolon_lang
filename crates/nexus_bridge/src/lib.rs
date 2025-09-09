@@ -18,7 +18,7 @@ lazy_static! {
 }
 static NEXT_ENGINE_ID: AtomicU64 = AtomicU64::new(1);
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "system" fn Java_io_nexus_eidolon_NexusEngine_nativeInit<'local>(
     mut _env: JNIEnv<'local>,
     _class: JClass<'local>,
@@ -30,7 +30,7 @@ pub extern "system" fn Java_io_nexus_eidolon_NexusEngine_nativeInit<'local>(
     engine_id as jlong
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "system" fn Java_io_nexus_eidolon_NexusEngine_nativeDestroy<'local>(
     mut _env: JNIEnv<'local>,
     _class: JClass<'local>,
@@ -40,7 +40,7 @@ pub extern "system" fn Java_io_nexus_eidolon_NexusEngine_nativeDestroy<'local>(
     engines.remove(&(engine_id as u64));
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "system" fn Java_io_nexus_eidolon_NexusEngine_nativeEvaluate<'local>(
     mut env: JNIEnv<'local>,
     _class: JClass<'local>,
@@ -65,7 +65,7 @@ pub extern "system" fn Java_io_nexus_eidolon_NexusEngine_nativeEvaluate<'local>(
     output.into_raw()
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "system" fn Java_io_nexus_eidolon_NexusEngine_nativeSetLogCallback<'local>(
     env: JNIEnv<'local>,
     _class: JClass<'local>,
