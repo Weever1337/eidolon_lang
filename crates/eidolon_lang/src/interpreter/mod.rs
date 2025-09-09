@@ -476,10 +476,16 @@ fn evaluate_expression(
 
                 let mut function_scope_env = Environment::new(env.globals);
                 function_scope_env.functions = env.functions.clone();
-                load_builtins(&mut function_scope_env);
+                function_scope_env.native_functions = env.native_functions.clone();
+                function_scope_env.constants = env.constants.clone();
+                function_scope_env.variables = env.variables.clone();
 
-                for (param_name, arg_expr) in func_def.params.iter().zip(call.args.iter()) {
-                    let arg_value = evaluate_expression(arg_expr, env)?;
+                let mut evaluated_args = Vec::new();
+                for arg_expr in &call.args {
+                    evaluated_args.push(evaluate_expression(arg_expr, env)?);
+                }
+
+                for (param_name, arg_value) in func_def.params.iter().zip(evaluated_args.into_iter()) {
                     function_scope_env.set_var(param_name.clone(), arg_value);
                 }
 
